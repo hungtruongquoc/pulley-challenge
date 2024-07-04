@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Challenge Solver</title>
+</head>
+<body>
+<h1>Challenge Solver</h1>
+<label for="email">Enter your email:</label>
+<input type="email" id="email" name="email">
+<button onclick="startChallenges()">Start Challenges</button>
+
+<script>
+    async function fetchAndDecodePath(levelInfo) {
+        const encryptedPath = levelInfo.encrypted_path;
+        const encryptionMethod = levelInfo.encryption_method;
+
+        if (encryptionMethod === "nothing") {
+            return encryptedPath;
+        } else if (encryptionMethod === "encoded as base64") {
+            return "task_" + atob(encryptedPath.replace("task_", ""));
+        } else {
+            throw new Error("Unknown encryption method");
+        }
+    }
+
+    async function fetchChallenge(path) {
+        try {
+            const response = await fetch(`https://example.com/${path}`);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return await response.json();
+        } catch (error) {
+            console.error(`Error fetching challenge at path: ${path}`, error);
+            return null;
+        }
+    }
+
+    async function processChallenges(email) {
+        let challengeResponse = await fetch(`https://ciphersprint.pulley.com/${email}`)
+        challengeResponse = await challengeResponse.json();
+
+        console.log(challengeResponse)
+
+        while (levelInfo) {
+            // Decode the path
+            const decodedPath = await fetchAndDecodePath(levelInfo);
+            console.log(`Level ${levelInfo.level} Path: ${decodedPath}`);
+
+            // Fetch the next challenge
+            levelInfo = await fetchChallenge(decodedPath);
+
+            if (!levelInfo) {
+                console.log("No more challenges found or an error occurred.");
+                break;
+            }
+        }
+    }
+
+    function startChallenges() {
+        const email = document.getElementById('email').value;
+        if (email) {
+            processChallenges(email);
+        } else {
+            alert("Please enter a valid email.");
+        }
+    }
+</script>
+</body>
+</html>
